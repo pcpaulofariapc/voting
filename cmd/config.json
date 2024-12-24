@@ -1,0 +1,29 @@
+{
+	"production": false,
+	"application": {
+		"name": "voting",
+		"package": "github.com/pcpaulofariapc/voting/",
+		"time_location": "America/Sao_Paulo"
+	},
+	"databases":
+		{
+			"nickname": "postgres-voting",
+			"name": "voting",
+			"user": "voting_app",
+			"password": "voting@123456",
+			"host": "localhost",
+			"port": "5432"
+		},
+	"services": {
+			"memcache": {
+                "host": "localhost:11211"
+            },
+			"kafka": {
+                "host": "localhost:19092"
+            }
+        },
+	"integration": {
+	},
+	"log": {
+	}
+}
