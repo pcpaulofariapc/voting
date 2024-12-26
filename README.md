@@ -13,8 +13,8 @@ Para rodar o sistema e seus microsserviços, você precisará de:
 - Acessar a pasta kafka na raiz do projeto;
 - Abrir um terminal e executar o comando:
     - 'docker compose up -d'
-- Entrar no container kafika-kafka-1-1 para criar o tópico:
-    - 'docker exec -it kafika-kafka-1-1 bash'
+- Entrar no container kafka-kafka-1-1 para criar o tópico:
+    - 'docker exec -it kafka-kafka-1-1 bash'
 - Criar o tópico "votacaoVotoBBB":
     - 'kafka-topics --create --bootstrap-server localhost:19092 --replication-factor 2 --partitions 3 --topic votacaoVotoBBB --config min.insync.replicas=2 acks=all enable.idempotence=true'
 
