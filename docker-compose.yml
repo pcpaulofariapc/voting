@@ -1,15 +1,6 @@
 version: "3.9"
 
-services:
-    voting_app:
-        container_name: voting_app
-        image: go-api-voting
-        build: . 
-        ports:
-            - "8000:8000"
-        depends_on: 
-            - voting_db
-          
+services:      
     voting_db:
         container_name: voting_db
         image: postgres:12
