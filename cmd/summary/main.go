@@ -69,9 +69,22 @@ func summary(dbConnection *sql.DB, memcacheConnect *memcache.Client) {
 		if err != nil {
 			panic(err)
 		}
+
+		if wallDB == nil {
+			fmt.Println("wallDB NILL")
+		} else {
+			fmt.Println("wallDB NOT NILL")
+		}
+
 		wallMC, err = getActiveWallMemcache(memcacheConnect)
 		if err != nil {
 			panic(err)
+		}
+
+		if wallMC == nil {
+			fmt.Println("wallMC NILL")
+		} else {
+			fmt.Println("wallMC NOT NILL")
 		}
 
 		// Atualiza o paredeão no memcache
@@ -104,21 +117,21 @@ func summary(dbConnection *sql.DB, memcacheConnect *memcache.Client) {
 }
 
 func getActiveWallDB(dbConnection *sql.DB) (activeWall *ActiveWall, err error) {
-	var rows *sql.Rows
+	var (
+		rows   *sql.Rows
+		result bool
+	)
 	rows, err = dbConnection.Query("SELECT WALL.id, WALL.name_wall, WALL.start_time::TIMESTAMPTZ, WALL.end_time::TIMESTAMPTZ, PARTICIPANT.id AS participant_id, PARTICIPANT.name_participant, COUNT(VOTE.id) AS total_votes " +
 		"FROM t_wall WALL INNER JOIN t_wall_participant WALLPARTICIPANT ON WALL.id =  WALLPARTICIPANT.wall_id INNER JOIN t_participant PARTICIPANT ON WALLPARTICIPANT.participant_id = PARTICIPANT.id LEFT JOIN t_vote VOTE ON PARTICIPANT.id = VOTE.participant_id AND WALL.ID = VOTE.wall_id " +
 		"WHERE WALL.deleted_at is NULL AND WALL.start_time < NOW() AND WALL.end_time > NOW() " +
 		"GROUP BY WALL.id, PARTICIPANT.id, VOTE.participant_ID ORDER BY TOTAL_VOTES ASC")
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		} else {
-			return nil, err
-		}
+		return nil, err
 	}
 
 	activeWall = new(ActiveWall)
 	for rows.Next() {
+		result = true
 		participant := new(ParticipantWall)
 		err = rows.Scan(
 			&activeWall.ID,
@@ -134,8 +147,10 @@ func getActiveWallDB(dbConnection *sql.DB) (activeWall *ActiveWall, err error) {
 		activeWall.Participants = append(activeWall.Participants, participant)
 	}
 
-	if activeWall != nil {
+	if result {
 		calculatePercentage(activeWall)
+	} else {
+		return nil, nil
 	}
 	return
 }
@@ -144,8 +159,12 @@ func getActiveWallMemcache(memcacheConnect *memcache.Client) (activeWall *Active
 
 	var data *memcache.Item
 	data, err = memcacheConnect.Get("ActiveWall")
-	if err != nil && err != memcache.ErrCacheMiss {
-		return nil, err
+	if err != nil {
+		if err == memcache.ErrCacheMiss {
+			return nil, nil
+		} else {
+			return nil, err
+		}
 	}
 
 	if data != nil {
