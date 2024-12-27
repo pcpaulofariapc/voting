@@ -31,10 +31,6 @@ func (w *WallRepository) GetAllWallsDB() (walls *model.AllWalls, err error) {
 
 	rows, err = w.connectionDB.Query("SELECT id, name_wall, created_at::TIMESTAMPTZ, start_time::TIMESTAMPTZ, end_time::TIMESTAMPTZ FROM t_wall WHERE deleted_at IS NULL ORDER BY start_time DESC")
 	if err != nil {
-		if err == sql.ErrNoRows {
-			err = errors.New("não foram encontrados paredões")
-			return nil, err
-		}
 		return nil, err
 	}
 
@@ -53,6 +49,12 @@ func (w *WallRepository) GetAllWallsDB() (walls *model.AllWalls, err error) {
 		}
 		walls.AllWalls = append(walls.AllWalls, wall)
 	}
+
+	if len(walls.AllWalls) == 0 {
+		err = errors.New("não foram encontrados paredões")
+		return nil, err
+	}
+
 	return
 }
 
@@ -61,10 +63,6 @@ func (w *WallRepository) GetAllParticipantsDB() (participants *model.Participant
 
 	rows, err = w.connectionDB.Query("SELECT id, name_participant, created_at::TIMESTAMPTZ FROM t_participant WHERE deleted_at IS NULL ORDER BY created_at DESC")
 	if err != nil {
-		if err == sql.ErrNoRows {
-			err = errors.New("não foram encontrados participantes")
-			return nil, err
-		}
 		return nil, err
 	}
 
@@ -80,6 +78,11 @@ func (w *WallRepository) GetAllParticipantsDB() (participants *model.Participant
 			return nil, err
 		}
 		participants.Participants = append(participants.Participants, wall)
+	}
+
+	if len(participants.Participants) == 0 {
+		err = errors.New("não foram encontrados participantes")
+		return nil, err
 	}
 	return
 }
@@ -107,13 +110,19 @@ func (w *WallRepository) GetActiveWall() (activeAll *model.ActiveWall, err error
 	var data *memcache.Item
 
 	data, err = w.connectionMem.Get("ActiveWall")
-	if err != nil && err != memcache.ErrCacheMiss {
-		return nil, err
+	if err != nil {
+		if err == memcache.ErrCacheMiss {
+			return nil, nil
+		} else {
+			return nil, err
+		}
 	}
 
-	err = json.Unmarshal(data.Value, &activeAll)
-	if err != nil {
-		return nil, err
+	if data != nil {
+		err = json.Unmarshal(data.Value, &activeAll)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return
@@ -121,8 +130,9 @@ func (w *WallRepository) GetActiveWall() (activeAll *model.ActiveWall, err error
 
 func (w *WallRepository) GetWallByID(wallID uuid.UUID) (wall *model.ActiveWall, err error) {
 	var (
-		rows  *sql.Rows
-		query *sql.Stmt
+		rows   *sql.Rows
+		query  *sql.Stmt
+		result bool
 	)
 
 	query, err = w.connectionDB.Prepare("SELECT WALL.id, WALL.name_wall, WALL.start_time::TIMESTAMPTZ, WALL.end_time::TIMESTAMPTZ, PARTICIPANT.id AS participant_id, PARTICIPANT.name_participant, COUNT(VOTE.id) AS total_votes " +
@@ -135,10 +145,6 @@ func (w *WallRepository) GetWallByID(wallID uuid.UUID) (wall *model.ActiveWall, 
 
 	rows, err = query.Query(wallID)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			err = errors.New("paredão não foi encontrado")
-			return nil, err
-		}
 		return nil, err
 	}
 
@@ -156,10 +162,16 @@ func (w *WallRepository) GetWallByID(wallID uuid.UUID) (wall *model.ActiveWall, 
 		if err != nil {
 			return nil, err
 		}
+		result = true
 		wall.Participants = append(wall.Participants, participant)
 	}
 
-	calculatePercentage(wall)
+	if result {
+		calculatePercentage(wall)
+	} else {
+		err = errors.New("paredão não foi encontrado")
+		return nil, err
+	}
 	return
 }
 

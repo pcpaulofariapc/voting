@@ -40,6 +40,8 @@ func (w *WallUsecase) GetParticipantsActiveWall() (participants *model.Participa
 				Name: activeWall.Participants[i].Name,
 			}
 		}
+	} else {
+		err = errors.New("não existe paredão ativo no momento")
 	}
 	return
 }
@@ -47,7 +49,7 @@ func (w *WallUsecase) GetParticipantsActiveWall() (participants *model.Participa
 func (w *WallUsecase) Vote(vote model.Vote) (result *model.ResultVote, err error) {
 	var (
 		idValidate   *uuid.UUID
-		activeWAll   *model.ActiveWall
+		activeWall   *model.ActiveWall
 		dateRegister time.Time
 		timeLocation *time.Location
 	)
@@ -55,28 +57,28 @@ func (w *WallUsecase) Vote(vote model.Vote) (result *model.ResultVote, err error
 	timeLocation = config.GetTimeLocation()
 	dateRegister = time.Now().In(timeLocation)
 
-	activeWAll, err = w.repository.GetActiveWall()
+	activeWall, err = w.repository.GetActiveWall()
 	if err != nil {
 		return nil, err
 	}
 
-	if activeWAll == nil {
+	if activeWall == nil {
 		err = errors.New("não existe paredão ativo no momento")
 		return nil, err
 	}
 
-	if dateRegister.After(activeWAll.EndTime.In(timeLocation)) {
+	if dateRegister.After(activeWall.EndTime.In(timeLocation)) {
 		err = errors.New("o paredão encerrou")
 		return nil, err
 	}
 
-	if activeWAll.ID != *vote.WallID {
+	if activeWall.ID != *vote.WallID {
 		err = errors.New("o paredão ativo no momento é diferente do paredão indicado no voto")
 		return nil, err
 	}
 
-	for i := range activeWAll.Participants {
-		if *vote.ParticipantID == activeWAll.Participants[i].ID {
+	for i := range activeWall.Participants {
+		if *vote.ParticipantID == activeWall.Participants[i].ID {
 			idValidate = vote.ParticipantID
 		}
 	}
@@ -89,7 +91,7 @@ func (w *WallUsecase) Vote(vote model.Vote) (result *model.ResultVote, err error
 	voteRegister := model.VoteRegister{
 		ParticipantID: *idValidate,
 		DateRegister:  time.Now().In(config.GetTimeLocation()),
-		WallID:        activeWAll.ID,
+		WallID:        activeWall.ID,
 		ID:            uuid.New(),
 		IP:            vote.IP,
 	}
@@ -107,12 +109,12 @@ func (w *WallUsecase) Vote(vote model.Vote) (result *model.ResultVote, err error
 
 	result = new(model.ResultVote)
 	result.RegisterID = voteRegister.ID
-	result.PartialResults = make([]model.PartialResult, len(activeWAll.Participants))
-	for i := range activeWAll.Participants {
-		result.PartialResults[i].ID = activeWAll.Participants[i].ID
-		result.PartialResults[i].Name = activeWAll.Participants[i].Name
-		result.PartialResults[i].Votes = activeWAll.Participants[i].Votes
-		result.PartialResults[i].VotesPercentage = activeWAll.Participants[i].VotesPercentage
+	result.PartialResults = make([]model.PartialResult, len(activeWall.Participants))
+	for i := range activeWall.Participants {
+		result.PartialResults[i].ID = activeWall.Participants[i].ID
+		result.PartialResults[i].Name = activeWall.Participants[i].Name
+		result.PartialResults[i].Votes = activeWall.Participants[i].Votes
+		result.PartialResults[i].VotesPercentage = activeWall.Participants[i].VotesPercentage
 	}
 
 	fmt.Printf("\n Register vote, vote ip: %s, participant id: %s date: %s, \n", voteRegister.IP, voteRegister.ParticipantID, voteRegister.DateRegister)
@@ -123,6 +125,11 @@ func (w *WallUsecase) Vote(vote model.Vote) (result *model.ResultVote, err error
 func (w *WallUsecase) GetPartialResultActiveWall() (activeWall *model.ActiveWall, err error) {
 	activeWall, err = w.repository.GetActiveWall()
 	if err != nil {
+		return nil, err
+	}
+
+	if activeWall == nil {
+		err = errors.New("não existe paredão ativo no momento")
 		return nil, err
 	}
 
