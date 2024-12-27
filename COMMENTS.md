@@ -56,7 +56,7 @@ Microsserviço responsável por:
 
 ## API Voting
 
-API desevolvida em golang seguindo o padrão de arquitetura limpa. A API se conecta aos bancos de dados PostgreSQL (relacional) e Memcache (chave-valor). A API também se conecta com o Apache Kafka para enviar os dados de um voto para regsitro.
+API desevolvida em golang seguindo o padrão de arquitetura limpa. A API se conecta aos bancos de dados PostgreSQL (relacional) e Memcache (chave-valor). A API também se conecta com o Apache Kafka para enviar os dados de um voto para registro.
 
 Todas as interações com os usuários são feitas atravez das rotas HTTP explicadas a seguir:
 
