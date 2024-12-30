@@ -25,7 +25,7 @@ Para rodar o sistema e seus microsserviços, você precisará de:
 ### (03) Rodar Banco de Dados
 - Acessar o diretório raiz do sistema e executar o comando abaixo: 
     - 'docker compose up -d'
-- Acessar o banco de dados com as configurações presentes no arquivo `docker-compose.yml` (voting/docker-compose.yml) e aplicar os scrips presentes no arquivo `db_migration_01.sql` (voting/migrationdb_migration_01.sql).
+- Acessar o banco de dados com as configurações presentes no arquivo `docker-compose.yml` (voting/docker-compose.yml) e aplicar os scrips presentes no arquivo `db_migration_01.sql` (voting/migration/db_migration_01.sql).
 
 ### (04) Rodar o Server de Votação (Voting)
 - Acessar o diretório cmd (voting/cmd) e executar o arquivo `main.go`:

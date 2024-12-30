@@ -70,12 +70,6 @@ func summary(dbConnection *sql.DB, memcacheConnect *memcache.Client) {
 			panic(err)
 		}
 
-		if wallDB == nil {
-			fmt.Println("wallDB NILL")
-		} else {
-			fmt.Println("wallDB NOT NILL")
-		}
-
 		wallMC, err = getActiveWallMemcache(memcacheConnect)
 		if err != nil {
 			panic(err)
